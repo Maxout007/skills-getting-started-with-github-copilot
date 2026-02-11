@@ -34,6 +34,28 @@ document.addEventListener("DOMContentLoaded", () => {
     const activitiesList = document.getElementById("activities-list");
     activitiesList.innerHTML = "";
 
+      
+              // Add event listeners for delete buttons
+              document.querySelectorAll(".delete-participant").forEach((btn) => {
+                btn.addEventListener("click", async (e) => {
+                  const activity = btn.getAttribute("data-activity");
+                  const email = btn.getAttribute("data-email");
+                  try {
+                    // Send DELETE request to backend
+                    const resp = await fetch(`/activities/${encodeURIComponent(activity)}/participants/${encodeURIComponent(email)}`, {
+                      method: "DELETE"
+                    });
+                    if (resp.ok) {
+                      fetchActivities(); // Refresh activities
+                    } else {
+                      const errMsg = await resp.text();
+                      alert("Failed to remove participant: " + errMsg);
+                    }
+                  } catch (err) {
+                    alert("Error removing participant.");
+                  }
+                });
+              });
     Object.entries(activities).forEach(([name, details]) => {
       const card = document.createElement("div");
       card.className = "activity-card";
@@ -50,10 +72,10 @@ document.addEventListener("DOMContentLoaded", () => {
                 ${details.participants
                   .map(
                     (email) =>
-                      `<li><span style="color:#1a237e;">${email}</span></li>`
+                      `<li><span style="color:#1a237e;">${email}</span><button class="delete-participant" title="Remove participant" data-activity="${name}" data-email="${email}">&#10006;</button></li>`
                   )
                   .join("")}
-            </ul>`
+              </ul>`
             : `<span class="no-participants">No participants yet</span>`
         }
       `;
@@ -83,6 +105,7 @@ document.addEventListener("DOMContentLoaded", () => {
         messageDiv.textContent = result.message;
         messageDiv.className = "success";
         signupForm.reset();
+        fetchActivities(); // Refresh activities list
       } else {
         messageDiv.textContent = result.detail || "An error occurred";
         messageDiv.className = "error";
